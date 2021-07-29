@@ -1,0 +1,22 @@
+{
+  "name": "timimoryo-matagiki",
+  "version": "1.0.0",
+  "description": "hai",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enpitut2021/timimoryo-matagiki.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/enpitut2021/timimoryo-matagiki/issues"
+  },
+  "homepage": "https://github.com/enpitut2021/timimoryo-matagiki#readme",
+  "dependencies": {
+    "@slack/bolt": "^3.5.0"
+  }
+}
