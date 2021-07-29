@@ -13,11 +13,25 @@ const app = new App({
 // });
 
 // この echo コマンドは ただ、その引数を（やまびこのように）おうむ返しする
-app.command('/echo', async ({command, ack, say}) => {
+app.command('/matagiki', async ({command, ack, say, context}) => {
     // コマンドリクエストを確認
     await ack();
 
-    await say(`${command.text}`);
+    await say(`「${command.text}」> 質問受け付けました．しばらくお待ちください．`);
+
+    const channelId = 'C029QSVP30C'
+
+    try {
+        // トークンを用いて chat.scheduleMessage 関数を呼び出す
+        const result = await app.client.chat.postMessage({
+            // アプリの初期化に用いたトークンを `context` オブジェクトに保存
+            token: context.botToken,
+            channel: channelId,
+            text: `<@${command.user_name}>「${command.text}」`
+        });
+    } catch (error) {
+        console.error(error);
+    }
 });
 
 (async () => {
