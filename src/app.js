@@ -84,6 +84,15 @@ app.command("/matagiki", async ({ ack, body, client }) => {
   }
 });
 
+app.message('', async ({ message}) => {
+  // say() sends a message to the channel where the event was triggered
+  if (message.channel_type == "im"){
+    logging(`<@${message.user}>から受け取りました。
+    投稿内容：${message.text}`)
+  }
+});
+
+
 // モーダルでのデータ送信イベントを処理します
 app.view("view_1", async ({ ack, body, view, client, context }) => {
   // モーダルでのデータ送信イベントを確認
