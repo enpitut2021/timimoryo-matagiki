@@ -51,9 +51,10 @@ app.command('/ticket', async ({ ack, body, client }) => {
             type: 'plain_text',
             text: 'Modal title'
             },
-            "blocks": [
+            blocks: [
                 {
                     "type": "input",
+                    "block_id": "block_1",
                     "element": {
                         "type": "plain_text_input",
                         "multiline": true,
@@ -78,6 +79,49 @@ app.command('/ticket', async ({ ack, body, client }) => {
         console.error(error);
     }
 });
+
+// モーダルでのデータ送信イベントを処理します
+app.view('view_1', async ({ ack, body, view, client, context }) => {
+    // モーダルでのデータ送信イベントを確認
+    await ack();
+
+    console.log(body)
+  
+    // 入力値を使ってやりたいことをここで実装 - ここでは DB に保存して送信内容の確認を送っている
+  
+    // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
+    const val = view['state']['values']['block_1']['plain_text_input-action'];
+    const user = body['user']['id'];
+  
+    // ユーザーに対して送信するメッセージ
+    let msg = 'Your submission was successful';
+    // チャンネルに質問内容を送信
+    const channelId = 'C029QSVP30C'
+
+    try {
+        // トークンを用いて chat.scheduleMessage 関数を呼び出す
+        const result = await app.client.chat.postMessage({
+            // アプリの初期化に用いたトークンを `context` オブジェクトに保存
+            token: context.botToken,
+            channel: channelId,
+            text: `<@${body.user.name}>「${val}」`
+        });
+    } catch (error) {
+        console.error(error);
+    }
+  
+    // ユーザーにメッセージを送信
+    try {
+      await client.chat.postMessage({
+        channel: user,
+        text: msg
+      });
+    }
+    catch (error) {
+      console.error(error);
+    }
+  
+  });
 
 (async () => {
     // Start your app
