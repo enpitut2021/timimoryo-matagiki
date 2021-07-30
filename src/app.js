@@ -102,7 +102,6 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   logging(`<@${body.user.name}>「${val.value}」`);
 
   const user_list = await app.client.users.list()
-  console.log("user list member", typeof (user_list.member), user_list.members);
   const send_user = choose_at_random(user_list.members)
   console.log("送る人: ", send_user);
 
