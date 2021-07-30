@@ -84,10 +84,10 @@ app.command("/matagiki", async ({ ack, body, client }) => {
   }
 });
 
-app.message('', async ({ message}) => {
+app.message('', async ({ message, context}) => {
   // say() sends a message to the channel where the event was triggered
   logging(`<@${message.user}>から受け取りました。
-  投稿内容：${message.text}`)
+  投稿内容：${message.text}`, context)
 });
 
 
