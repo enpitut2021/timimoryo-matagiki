@@ -104,7 +104,7 @@ app.view('view_1', async ({ ack, body, view, client, context }) => {
             // アプリの初期化に用いたトークンを `context` オブジェクトに保存
             token: context.botToken,
             channel: channelId,
-            text: `<@${body.user.name}>「${val}」`
+            text: `<@${body.user.name}>「${val.value}」`
         });
     } catch (error) {
         console.error(error);
