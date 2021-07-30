@@ -20,8 +20,9 @@ function choose_at_random(arrayData) {
 /**
  *
  * @param {string} message 送信したい内容
+ * @param {Context} context botTokenが入っている変数
  */
-async function logging(message) {
+async function logging(message, context) {
   // チャンネルに質問内容を送信
   const channelId = "C029QSVP30C";
 
@@ -97,7 +98,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの質問「${val.value}」を受け付けました`;
 
-  logging(`<@${body.user.name}>「${val.value}」`);
+  logging(`<@${body.user.name}>「${val.value}」`, context);
 
   const user_list = await app.client.users.list()
   const send_user = choose_at_random(user_list.members)
@@ -116,7 +117,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
   <@${body.user.name}>さんからの質問で「${val.value}」という質問が来ています．
   お答えできそうなら返信ください．他にいい人がいる場合はその人を教えてください！
-  よろしくお願いいたします．`)
+  よろしくお願いいたします．`, context)
 
 });
 
