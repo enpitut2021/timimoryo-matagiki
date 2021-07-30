@@ -120,11 +120,22 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
     console.error(error);
   }
 
-  logging(`<@${send_user.id}> チーム魑魅魍魎です．
+  const send_msg = `<@${send_user.id}> チーム魑魅魍魎です．
   私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
   <@${body.user.name}>さんからの質問で「${val.value}」という質問が来ています．
   お答えできそうなら返信ください．他にいい人がいる場合はその人を教えてください！
-  よろしくお願いいたします．`, context)
+  よろしくお願いいたします．`
+
+  logging(send_msg, context)
+  
+  try {
+    await client.chat.postMessage({
+      channel: send_user.id,
+      text: send_msg,
+    });
+  } catch (error) {
+    console.error(error);
+  }
 
 });
 
