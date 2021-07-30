@@ -86,10 +86,8 @@ app.command("/matagiki", async ({ ack, body, client }) => {
 
 app.message('', async ({ message}) => {
   // say() sends a message to the channel where the event was triggered
-  if (message.channel_type == "im"){
-    logging(`<@${message.user}>から受け取りました。
-    投稿内容：${message.text}`)
-  }
+  logging(`<@${message.user}>から受け取りました。
+  投稿内容：${message.text}`)
 });
 
 
