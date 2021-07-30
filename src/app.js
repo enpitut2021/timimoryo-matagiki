@@ -6,35 +6,7 @@ const app = new App({
     signingSecret: process.env.SLACK_SIGNING_SECRET
 });
 
-// Listens to incoming messages that contain "hello"
-// app.message('', async ({message, say}) => {
-//     // say() sends a message to the channel where the event was triggered
-//     await say(`${message.text}`);
-// });
-
-// この echo コマンドは ただ、その引数を（やまびこのように）おうむ返しする
-app.command('/matagiki', async ({command, ack, say, context}) => {
-    // コマンドリクエストを確認
-    await ack();
-
-    await say(`「${command.text}」> 質問受け付けました．しばらくお待ちください．`);
-
-    const channelId = 'C029QSVP30C'
-
-    try {
-        // トークンを用いて chat.scheduleMessage 関数を呼び出す
-        const result = await app.client.chat.postMessage({
-            // アプリの初期化に用いたトークンを `context` オブジェクトに保存
-            token: context.botToken,
-            channel: channelId,
-            text: `<@${command.user_name}>「${command.text}」`
-        });
-    } catch (error) {
-        console.error(error);
-    }
-});
-
-app.command('/ticket', async ({ ack, body, client }) => {
+app.command('/matagiki', async ({ ack, body, client }) => {
     // コマンドのリクエストを確認
     await ack();
 
@@ -52,34 +24,20 @@ app.command('/ticket', async ({ ack, body, client }) => {
             text: 'Modal title'
             },
             blocks: [
-            {
-                type: 'section',
-                text: {
-                type: 'mrkdwn',
-                text: 'Welcome to a modal with _blocks_'
-                },
-                accessory: {
-                type: 'button',
-                text: {
-                    type: 'plain_text',
-                    text: 'Click me!'
-                },
-                action_id: 'button_abc'
+                {
+                    "type": "input",
+                    "block_id": "block_1",
+                    "element": {
+                        "type": "plain_text_input",
+                        "multiline": true,
+                        "action_id": "plain_text_input-action"
+                    },
+                    "label": {
+                        "type": "plain_text",
+                        "text": "質問を教えてください",
+                        "emoji": true
+                    }
                 }
-            },
-            {
-                type: 'input',
-                block_id: 'input_c',
-                label: {
-                type: 'plain_text',
-                text: 'What are your hopes and dreams?'
-                },
-                element: {
-                type: 'plain_text_input',
-                action_id: 'dreamy_input',
-                multiline: true
-                }
-            }
             ],
             submit: {
             type: 'plain_text',
@@ -93,6 +51,49 @@ app.command('/ticket', async ({ ack, body, client }) => {
         console.error(error);
     }
 });
+
+// モーダルでのデータ送信イベントを処理します
+app.view('view_1', async ({ ack, body, view, client, context }) => {
+    // モーダルでのデータ送信イベントを確認
+    await ack();
+
+    console.log(body)
+  
+    // 入力値を使ってやりたいことをここで実装 - ここでは DB に保存して送信内容の確認を送っている
+  
+    // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
+    const val = view['state']['values']['block_1']['plain_text_input-action'];
+    const user = body['user']['id'];
+  
+    // ユーザーに対して送信するメッセージ
+    const msg = `あなたの質問「${val.value}」を受け付けました`;
+    // チャンネルに質問内容を送信
+    const channelId = 'C029QSVP30C'
+
+    try {
+        // トークンを用いて chat.scheduleMessage 関数を呼び出す
+        const result = await app.client.chat.postMessage({
+            // アプリの初期化に用いたトークンを `context` オブジェクトに保存
+            token: context.botToken,
+            channel: channelId,
+            text: `<@${body.user.name}>「${val.value}」`
+        });
+    } catch (error) {
+        console.error(error);
+    }
+  
+    // ユーザーにメッセージを送信
+    try {
+      await client.chat.postMessage({
+        channel: user,
+        text: msg
+      });
+    }
+    catch (error) {
+      console.error(error);
+    }
+  
+  });
 
 (async () => {
     // Start your app
