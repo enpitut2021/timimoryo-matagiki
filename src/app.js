@@ -66,7 +66,7 @@ app.view('view_1', async ({ ack, body, view, client, context }) => {
     const user = body['user']['id'];
   
     // ユーザーに対して送信するメッセージ
-    let msg = 'Your submission was successful';
+    const msg = `あなたの質問「${val.value}」を受け付けました`;
     // チャンネルに質問内容を送信
     const channelId = 'C029QSVP30C'
 
