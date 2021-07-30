@@ -103,7 +103,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
 
   const user_list = await app.client.users.list()
   const send_user = choose_at_random(user_list)
-  console.log(send_user);
+  console.log("送る人: ", send_user);
 
   // ユーザーにメッセージを送信
   try {
