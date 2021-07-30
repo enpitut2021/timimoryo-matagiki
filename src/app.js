@@ -6,6 +6,17 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
 });
 
+
+/**
+ * 配列の値からランダムで1つ選択して返す
+ * @param arr arrayData (required) 選択する配列の内容
+ * @return str
+ */
+function choose_at_random(arrayData) {
+  var arrayIndex = Math.floor(Math.random() * arrayData.length);
+  return arrayData[arrayIndex];
+}
+
 /**
  *
  * @param {string} message 送信したい内容
@@ -30,8 +41,7 @@ async function logging(message) {
 app.command("/matagiki", async ({ ack, body, client }) => {
   // コマンドのリクエストを確認
   await ack();
-  const user_list = await app.client.users.list()
-  console.log(user_list)
+
   try {
     const result = await client.views.open({
       // 適切な trigger_id を受け取ってから 3 秒以内に渡す
@@ -91,6 +101,10 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
 
   logging(`<@${body.user.name}>「${val.value}」`);
 
+  const user_list = await app.client.users.list()
+  const send_user = choose_at_random(user_list)
+  console.log(send_user);
+
   // ユーザーにメッセージを送信
   try {
     await client.chat.postMessage({
@@ -100,6 +114,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   } catch (error) {
     console.error(error);
   }
+
 });
 
 (async () => {
