@@ -10,7 +10,7 @@ const app = new App({
  *
  * @param {string} message 送信したい内容
  */
-function logging(message) {
+async function logging(message) {
   // チャンネルに質問内容を送信
   const channelId = "C029QSVP30C";
 
