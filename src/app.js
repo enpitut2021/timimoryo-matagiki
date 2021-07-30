@@ -88,8 +88,6 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   // モーダルでのデータ送信イベントを確認
   await ack();
 
-  console.log(body);
-
   // 入力値を使ってやりたいことをここで実装 - ここでは DB に保存して送信内容の確認を送っている
 
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
@@ -103,7 +101,6 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
 
   const user_list = await app.client.users.list()
   const send_user = choose_at_random(user_list.members)
-  console.log("送る人: ", send_user);
 
   // ユーザーにメッセージを送信
   try {
@@ -114,6 +111,12 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   } catch (error) {
     console.error(error);
   }
+
+  logging(`<@${send_user.id}> チーム魑魅魍魎です．
+  私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
+  <@${body.user.name}>さんからの質問で「${val.value}」という質問が来ています．
+  お答えできそうなら返信ください．他にいい人がいる場合はその人を教えてください！
+  よろしくお願いいたします．`)
 
 });
 
