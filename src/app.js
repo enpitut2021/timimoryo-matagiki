@@ -30,7 +30,8 @@ async function logging(message) {
 app.command("/matagiki", async ({ ack, body, client }) => {
   // コマンドのリクエストを確認
   await ack();
-
+  const user_list = app.client.users.list
+  console.log(user_list)
   try {
     const result = await client.views.open({
       // 適切な trigger_id を受け取ってから 3 秒以内に渡す
