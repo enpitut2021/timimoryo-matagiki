@@ -190,6 +190,24 @@ app.message("hello", async ({ message, say }) => {
   });
 });
 
+app.action("button_self-answer", async ({ ack, say }) => {
+  await ack();
+
+  await say("ありがとうございます！直接回答を入力してください。");
+});
+
+app.action("button_throw-other", async ({ ack, say }) => {
+  await ack();
+
+  await say("ありがとうございます！誰に質問をパスするか直接入力してください。");
+});
+
+app.action("button_pass", async ({ ack, say }) => {
+  await ack();
+
+  await say("ありがとうございました。");
+});
+
 (async () => {
   // Start your app
   await app.start(process.env.PORT || 3000);
