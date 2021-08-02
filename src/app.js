@@ -23,7 +23,7 @@ function choose_at_random(arrayData) {
  */
 async function logging(message, context) {
   // チャンネルに質問内容を送信
-  const channelId = "C029QSVP30C";
+  const channelId = process.env.SLACK_LOG_CHANNEL_ID;
 
   try {
     // トークンを用いて chat.scheduleMessage 関数を呼び出す
