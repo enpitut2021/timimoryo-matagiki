@@ -576,3 +576,14 @@ FodyWeavers.xsd
 
 .env
 ngrok
+
+### Firebase ###
+.idea
+/node_modules/*
+/.firebaserc
+
+### Firebase Patch ###
+.runtimeconfig.json
+.firebase/
+
+firebase.key.json
