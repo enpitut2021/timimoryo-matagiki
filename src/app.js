@@ -214,21 +214,24 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   }
 });
 
-app.action("button_self-answer", async ({ ack, say }) => {
+app.action("button_self-answer", async ({ ack, body, say, context }) => {
   await ack();
-
+  logging(
+    `<@${body.user.name}>さんが直接自分で回答するを選択しました`,
+    context
+  );
   await say("ありがとうございます！直接回答を入力してください。");
 });
 
-app.action("button_throw-other", async ({ ack, say }) => {
+app.action("button_throw-other", async ({ ack, body, say, context }) => {
   await ack();
-
+  logging(`<@${body.user.name}>さんが質問をパスすることにしました`, context);
   await say("ありがとうございます！誰に質問をパスするか直接入力してください。");
 });
 
-app.action("button_pass", async ({ ack, say }) => {
+app.action("button_pass", async ({ ack, body, say, context }) => {
   await ack();
-
+  logging(`<@${body.user.name}>さんが何もしないことにしました`, context);
   await say("ありがとうございました。");
 });
 
