@@ -164,12 +164,13 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   // 入力値を使ってやりたいことをここで実装 - ここでは DB に保存して送信内容の確認を送っている
 
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
-  const val = view["state"]["values"]["block_1"]["plain_text_input-action"];
+  const question_msg =
+    view.state.values.block_1["plain_text_input-action"].value;
 
   // ユーザーに対して送信するメッセージ
-  const msg = `あなたの質問「${val.value}」を受け付けました`;
+  const msg = `あなたの質問「${question_msg}」を受け付けました`;
 
-  logging(`<@${body.user.name}>「${val.value}」`, context);
+  logging(`<@${body.user.name}>「${question_msg}」`, context);
 
   const user_list = await app.client.users.list();
   const sendable_user_list = user_list.members.filter(
@@ -194,7 +195,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   }
 
   const question_object = generate_question_object(
-    val.value,
+    question_msg,
     body.user.name,
     send_user.id
   );
