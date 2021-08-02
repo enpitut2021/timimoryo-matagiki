@@ -24,7 +24,6 @@ function choose_at_random(arrayData) {
  */
 async function logging(message, context) {
   // チャンネルに質問内容を送信
-  // const channelId = "C029QSVP30C";
   const channelId = process.env.SLACK_LOGGING_CHANNNEL_ID;
 
   try {
