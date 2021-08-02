@@ -12,7 +12,8 @@ const app = new App({
  */
 async function logging(message) {
   // チャンネルに質問内容を送信
-  const channelId = "C029QSVP30C";
+  // const channelId = "C029QSVP30C";
+  const channelId = "C029DUEHRB9";
 
   try {
     // トークンを用いて chat.scheduleMessage 関数を呼び出す
