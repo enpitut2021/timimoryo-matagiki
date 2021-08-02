@@ -165,7 +165,6 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
 
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
   const val = view["state"]["values"]["block_1"]["plain_text_input-action"];
-  const user = body["user"]["id"];
 
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの質問「${val.value}」を受け付けました`;
@@ -173,12 +172,21 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   logging(`<@${body.user.name}>「${val.value}」`, context);
 
   const user_list = await app.client.users.list();
-  const send_user = choose_at_random(user_list.members);
+  const sendable_user_list = user_list.members.filter(
+    // Pythonでいうと `lamda member: memberがbotではない && memberが送った人ではない`
+
+    // TODO: SlackBotを弾く
+    (member) =>
+      !member.is_bot && !member.is_workflow_bot && member.id !== body.user.id
+  );
+
+  console.log(sendable_user_list);
+  const send_user = choose_at_random(sendable_user_list);
 
   // ユーザーにメッセージを送信
   try {
     await client.chat.postMessage({
-      channel: user,
+      channel: body.user.id,
       text: msg,
     });
   } catch (error) {
@@ -188,7 +196,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   const question_object = generate_question_object(
     val.value,
     body.user.name,
-    user.id
+    send_user.id
   );
 
   const send_msg = question_object.blocks[0].text.text;
