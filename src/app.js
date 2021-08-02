@@ -6,11 +6,23 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
 });
 
+
+/**
+ * 配列の値からランダムで1つ選択して返す
+ * @param arr arrayData (required) 選択する配列の内容
+ * @return str
+ */
+function choose_at_random(arrayData) {
+  var arrayIndex = Math.floor(Math.random() * arrayData.length);
+  return arrayData[arrayIndex];
+}
+
 /**
  *
  * @param {string} message 送信したい内容
+ * @param {Context} context botTokenが入っている変数
  */
-async function logging(message) {
+async function logging(message, context) {
   // チャンネルに質問内容を送信
   // const channelId = "C029QSVP30C";
   const channelId = "C02AJAH7VEC";
@@ -73,12 +85,17 @@ app.command("/matagiki", async ({ ack, body, client }) => {
   }
 });
 
+app.message('', async ({ message, context}) => {
+  // say() sends a message to the channel where the event was triggered
+  logging(`<@${message.user}>から受け取りました。
+  投稿内容：${message.text}`, context)
+});
+
+
 // モーダルでのデータ送信イベントを処理します
 app.view("view_1", async ({ ack, body, view, client, context }) => {
   // モーダルでのデータ送信イベントを確認
   await ack();
-
-  console.log(body);
 
   // 入力値を使ってやりたいことをここで実装 - ここでは DB に保存して送信内容の確認を送っている
 
@@ -89,7 +106,10 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの質問「${val.value}」を受け付けました`;
 
-  logging(`<@${body.user.name}>「${val.value}」`);
+  logging(`<@${body.user.name}>「${val.value}」`, context);
+
+  const user_list = await app.client.users.list()
+  const send_user = choose_at_random(user_list.members)
 
   // ユーザーにメッセージを送信
   try {
@@ -100,6 +120,24 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   } catch (error) {
     console.error(error);
   }
+
+  const send_msg = `<@${send_user.id}> チーム魑魅魍魎です．
+  私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
+  <@${body.user.name}>さんからの質問で「${val.value}」という質問が来ています．
+  お答えできそうなら返信ください．他にいい人がいる場合はその人を教えてください！
+  よろしくお願いいたします．`
+
+  logging(send_msg, context)
+  
+  try {
+    await client.chat.postMessage({
+      channel: send_user.id,
+      text: send_msg,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+
 });
 
 (async () => {
