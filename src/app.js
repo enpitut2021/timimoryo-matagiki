@@ -38,6 +38,70 @@ async function logging(message, context) {
   }
 }
 
+/**
+ * 質問者から回答候補者に質問を送信する
+ *
+ * @param {string} question 質問文本体
+ * @param {string} from_name 質問者のユーザー表示名
+ * @param {string} to_id 回答候補者のユーザーID
+ */
+function generate_question_object(question, from_name, to_id) {
+  const question_message = `<@${to_id}> チーム魑魅魍魎です．
+  私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
+  <@${from_name}>さんからの質問で「${question}」という質問が来ています．
+  お答えできそうなら返信ください．他にいい人がいる場合はその人を教えてください！
+  よろしくお願いいたします．`;
+
+  const question_object = {
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: question_message,
+        },
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "自分で回答する",
+              emoji: true,
+            },
+            value: "自分で回答する",
+            action_id: "button_self-answer",
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "他の人を紹介する",
+              emoji: true,
+            },
+            value: "他の人を紹介する",
+            action_id: "button_throw-other",
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "遠慮しておく",
+              emoji: true,
+            },
+            value: "遠慮しておく",
+            action_id: "button_pass",
+          },
+        ],
+      },
+    ],
+    text: "質問が送信されました．",
+  };
+  return question_object;
+}
+
 app.command("/matagiki", async ({ ack, body, client }) => {
   // コマンドのリクエストを確認
   await ack();
@@ -121,11 +185,13 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
     console.error(error);
   }
 
-  const send_msg = `<@${send_user.id}> チーム魑魅魍魎です．
-  私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
-  <@${body.user.name}>さんからの質問で「${val.value}」という質問が来ています．
-  お答えできそうなら返信ください．他にいい人がいる場合はその人を教えてください！
-  よろしくお願いいたします．`;
+  const question_object = generate_question_object(
+    val.value,
+    body.user.name,
+    user.id
+  );
+
+  const send_msg = question_object.blocks[0].text.text;
 
   logging(send_msg, context);
 
@@ -133,61 +199,11 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
     await client.chat.postMessage({
       channel: send_user.id,
       text: send_msg,
+      blocks: question_object.blocks,
     });
   } catch (error) {
     console.error(error);
   }
-});
-
-app.message("hello", async ({ message, say }) => {
-  // say() sends a message to the channel where the event was triggered
-  await say({
-    blocks: [
-      {
-        type: "section",
-        text: {
-          type: "mrkdwn",
-          text: "This is a section block with a button.",
-        },
-      },
-      {
-        type: "actions",
-        elements: [
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "自分で回答する",
-              emoji: true,
-            },
-            value: "自分で回答する",
-            action_id: "button_self-answer",
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "他の人を紹介する",
-              emoji: true,
-            },
-            value: "他の人を紹介する",
-            action_id: "button_throw-other",
-          },
-          {
-            type: "button",
-            text: {
-              type: "plain_text",
-              text: "遠慮しておく",
-              emoji: true,
-            },
-            value: "遠慮しておく",
-            action_id: "button_pass",
-          },
-        ],
-      },
-    ],
-    text: `Hey there <@${message.user}>!`,
-  });
 });
 
 app.action("button_self-answer", async ({ ack, say }) => {
