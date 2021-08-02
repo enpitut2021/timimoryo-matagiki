@@ -6,7 +6,6 @@ const app = new App({
   signingSecret: process.env.SLACK_SIGNING_SECRET,
 });
 
-
 /**
  * 配列の値からランダムで1つ選択して返す
  * @param arr arrayData (required) 選択する配列の内容
@@ -84,12 +83,14 @@ app.command("/matagiki", async ({ ack, body, client }) => {
   }
 });
 
-app.message('', async ({ message, context}) => {
+app.message("", async ({ message, context }) => {
   // say() sends a message to the channel where the event was triggered
-  logging(`<@${message.user}>から受け取りました。
-  投稿内容：${message.text}`, context)
+  logging(
+    `<@${message.user}>から受け取りました。
+  投稿内容：${message.text}`,
+    context
+  );
 });
-
 
 // モーダルでのデータ送信イベントを処理します
 app.view("view_1", async ({ ack, body, view, client, context }) => {
@@ -107,8 +108,8 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
 
   logging(`<@${body.user.name}>「${val.value}」`, context);
 
-  const user_list = await app.client.users.list()
-  const send_user = choose_at_random(user_list.members)
+  const user_list = await app.client.users.list();
+  const send_user = choose_at_random(user_list.members);
 
   // ユーザーにメッセージを送信
   try {
@@ -124,10 +125,10 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
   <@${body.user.name}>さんからの質問で「${val.value}」という質問が来ています．
   お答えできそうなら返信ください．他にいい人がいる場合はその人を教えてください！
-  よろしくお願いいたします．`
+  よろしくお願いいたします．`;
 
-  logging(send_msg, context)
-  
+  logging(send_msg, context);
+
   try {
     await client.chat.postMessage({
       channel: send_user.id,
@@ -136,7 +137,57 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   } catch (error) {
     console.error(error);
   }
+});
 
+app.message("hello", async ({ message, say }) => {
+  // say() sends a message to the channel where the event was triggered
+  await say({
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: "This is a section block with a button.",
+        },
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "自分で回答する",
+              emoji: true,
+            },
+            value: "自分で回答する",
+            action_id: "button_self-answer",
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "他の人を紹介する",
+              emoji: true,
+            },
+            value: "他の人を紹介する",
+            action_id: "button_throw-other",
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "遠慮しておく",
+              emoji: true,
+            },
+            value: "遠慮しておく",
+            action_id: "button_pass",
+          },
+        ],
+      },
+    ],
+    text: `Hey there <@${message.user}>!`,
+  });
 });
 
 (async () => {
