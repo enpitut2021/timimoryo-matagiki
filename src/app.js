@@ -1,4 +1,5 @@
 const {App} = require("@slack/bolt");
+const { firestore } = require("firebase-admin");
 require("dotenv").config();
 
 var admin = require("firebase-admin");
@@ -174,7 +175,8 @@ app.view("view_1", async ({ack, body, view, client, context}) => {
     // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
     const question_msg =
         view.state.values.block_1["plain_text_input-action"].value;
-
+  //firebaseに送信
+    admin.firestore().collection('questions').add(question_msg);
     // ユーザーに対して送信するメッセージ
     const msg = `あなたの質問「${question_msg}」を受け付けました`;
 
