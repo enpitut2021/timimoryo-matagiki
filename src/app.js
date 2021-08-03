@@ -294,6 +294,7 @@ app.action("button_self-answer", async ({ action, ack, body, context, client }) 
           },
           {
             "type": "input",
+            "block_id": "block_2",
             "element": {
               "type": "static_select",
               "placeholder": {
@@ -307,7 +308,7 @@ app.action("button_self-answer", async ({ action, ack, body, context, client }) 
                     "type": "plain_text",
                     "text": "こちらを選んでください",
                     "emoji": true
-                  },
+                  }, 
                   "value": `${question_collection_id}`
                 }
               ],
@@ -349,6 +350,7 @@ async function save_answer_to_firebase(answers_data, question_collection_id){
  */
 async function get_question_by_id(question_id) {
     const docSnap = await admin.firestore().collection("questions").doc(question_id).get()
+    console.log(docSnap.data())
     return docSnap.data()
 }
 
@@ -362,7 +364,7 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
   const answer_msg =
     view.state.values.block_1["plain_text_input-action"].value;
   const question_collection_id =
-    view.state.values.block_1["static_select-action"].value;
+    view.state.values.block_2["static_select-action"].selected_option.value;
 
   const answers_data =
   {
@@ -373,6 +375,7 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
   }
 
 
+  console.error("question_collection_id: ", question_collection_id)
   await save_answer_to_firebase(answers_data, question_collection_id);
 
   // ユーザーに対して送信するメッセージ
@@ -387,11 +390,10 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
 
 });
 
-app.action("button_throw-other", async ({ ack, body, say, context }) => {
+app.action("button_throw-other", async ({ action, ack, body, say, context, client }) => {
   await ack();
   logging(`<@${body.user.name}>さんが質問をパスすることにしました`, context);
-  const question_collection_id =
-    view.state.values.block_1["button_throw-other"].value;
+  const question_collection_id = action.value;
   try {
     const result = await client.views.open({
       // 適切な trigger_id を受け取ってから 3 秒以内に渡す
@@ -405,9 +407,10 @@ app.action("button_throw-other", async ({ ack, body, say, context }) => {
           type: "plain_text",
           text: "Modal title",
         },
-        "blocks": [
+        blocks: [
           {
             "type": "input",
+            "block_id": "block_1",
             "element": {
               "type": "multi_users_select",
               "placeholder": {
@@ -425,6 +428,7 @@ app.action("button_throw-other", async ({ ack, body, say, context }) => {
           },
           {
             "type": "input",
+            "block_id": "block_2",
             "element": {
               "type": "static_select",
               "placeholder": {
@@ -537,9 +541,9 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
 
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
   const question_collection_id =
-    view.state.values.block_1["static_select-action"].value;
+    view.state.values.block_2["static_select-action"].selected_option.value;
   const send_user =
-    view.state.values.block_1["multi_users_select-action"].value;
+    view.state.values.block_1["multi_users_select-action"].selected_users[0];
 
   question_msg = (await get_question_by_id(question_collection_id)).question
   question_questioner_name = (await get_question_by_id(question_collection_id)).questioner_id
@@ -570,7 +574,7 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
 
   try {
     await client.chat.postMessage({
-      channel: send_user.id,
+      channel: send_user,
       text: send_msg,
       blocks: question_object.blocks,
     });
@@ -579,17 +583,18 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
   }
 });
 
-app.action("button_pass", async ({ ack, body, say, context }) => {
+app.action("button_pass", async ({ action, ack, body, context, client }) => {
   await ack();
   logging(`<@${body.user.name}>さんが何もしないことにしました`, context);
 
-  const question_collection_id =
-    view.state.values.block_1["button_pass"].value;
+  const question_collection_id = action.value;
+  console.log(question_collection_id)
 
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
-  const question_msg = await get_question_by_id(question_id).question; 
-  const question_questioner_name = await get_question_by_id(question_id).questioner_name;  
-  const question_questioner_id = await get_question_by_id(question_id).questioner_id;  
+  const question = await get_question_by_id(question_collection_id)
+  const question_msg = question.question; 
+  const question_questioner_name = question.questioner_name;  
+  const question_questioner_id = question.questioner_id;  
 
   const user_list = await app.client.users.list();
   const sendable_user_list = user_list.members.filter(
@@ -603,14 +608,6 @@ app.action("button_pass", async ({ ack, body, say, context }) => {
   console.log(sendable_user_list);
   const send_user = choose_at_random(sendable_user_list);
 
-  const question_data = {
-    question: question_msg,
-    questioner_name: question_questioner_name,
-    questioner_id: question_questioner_id,
-    created_at: admin.firestore.FieldValue.serverTimestamp()  
-  }
-  console.log('question_data', question_data)
-  console.log('answer_data', answers_data)
   const question_object = generate_question_object(
     question_msg,
     question_questioner_name,
