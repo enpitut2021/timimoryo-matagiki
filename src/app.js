@@ -3,12 +3,11 @@ require("dotenv").config();
 
 var admin = require("firebase-admin");
 
-var serviceAccount = require("firebase.key.json");
+var serviceAccount = require("../firebase.key.json");
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });
-
 
 const app = new App({
     token: process.env.SLACK_BOT_TOKEN,
