@@ -113,8 +113,9 @@ function generate_question_object(question, from_name, to_id) {
 
 async function get_answerer_id_from_question_id(question_id){
     const answers_querysnap = await admin.firestore().collection('questions').doc(question_id).collection('answers').get();
-    const answers = answers_querysnap.docs()[0];
-    
+    const answer_snapshot = answers_querysnap.docs[0];
+    const answer = answer_snapshot.data()
+    return answer.answerer_id
 }
 
 app.command("/matagiki", async ({ack, body, client}) => {
