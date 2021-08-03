@@ -264,7 +264,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
  * @param {string} answer_collection_id 回答のコレクションID
  */
 function generate_answer_object(question_msg, answer_msg, from_name, to_id, answer_collection_id) {
-  const question_message = `「${question_msg}」という質問の回答として<@${from_name}>さんから「${answer_msg}}」という回答が返ってきています．
+  const question_message = `「${question_msg}」という質問の回答として<@${from_name}>さんから「${answer_msg}」という回答が返ってきています．
   是非、お礼をいいましょう!!`;
 
   const answer_object = {
