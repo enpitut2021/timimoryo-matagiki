@@ -111,6 +111,12 @@ function generate_question_object(question, from_name, to_id) {
     return question_object;
 }
 
+async function get_answerer_id_from_question_id(question_id){
+    const answers_querysnap = await admin.firestore().collection('questions').doc(question_id).collection('answers').get();
+    const answers = answers_querysnap.docs()[0];
+    
+}
+
 app.command("/matagiki", async ({ack, body, client}) => {
     // コマンドのリクエストを確認
     await ack();
