@@ -369,9 +369,9 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
 
   const answers_data =
   {
-    answer = answer_msg,
-    answerer_id = body.user.id,
-    answerer_name = body.user.name,
+    answer: answer_msg,
+    answerer_id: body.user.id,
+    answerer_name: body.user.name,
     created_at: admin.firestore.FieldValue.serverTimestamp()
   }
 
@@ -551,9 +551,9 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
 
   const answers_data =
   {
-    answer = `${body.user.name}が質問を${question_questioner_name}にパスしました`,
-    answerer_id = body.user.id,
-    answerer_name = body.user.name,
+    answer: `${body.user.name}が質問を${question_questioner_name}にパスしました`,
+    answerer_id: body.user.id,
+    answerer_name: body.user.name,
     created_at: admin.firestore.FieldValue.serverTimestamp()
   }
 
@@ -612,13 +612,8 @@ app.action("button_pass", async ({ ack, body, say, context }) => {
     questioner_id: question_questioner_id,
     created_at: admin.firestore.FieldValue.serverTimestamp()  
   }
-
-
-  const question_collection_id = await save_question_to_firebase(question_data);
-
   console.log('question_data', question_data)
   console.log('answer_data', answers_data)
-
   const question_object = generate_question_object(
     question_msg,
     question_questioner_name,
