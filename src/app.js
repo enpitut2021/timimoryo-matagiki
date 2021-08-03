@@ -118,6 +118,10 @@ async function get_answerer_id_from_question_id(question_id){
     return answer.answerer_id
 }
 
+async function answer_thanks(){
+    await say(question)
+}
+
 app.command("/matagiki", async ({ack, body, client}) => {
     // コマンドのリクエストを確認
     await ack();
