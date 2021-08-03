@@ -118,9 +118,7 @@ async function get_answerer_id_from_question_id(question_id){
     return answer.answerer_id
 }
 
-async function answer_thanks(){
-    await say(question)
-}
+
 
 app.command("/matagiki", async ({ack, body, client}) => {
     // コマンドのリクエストを確認
@@ -235,6 +233,14 @@ app.view("view_1", async ({ack, body, view, client, context}) => {
         console.error(error);
     }
 });
+
+app.view("view_answer", async({ack, body, say, context}) => {
+  let answer_msg = 
+  await say({
+    channel: body.user.id,
+    text: ,
+  })
+})
 
 app.action("button_self-answer", async ({ack, body, say, context}) => {
     await ack();
