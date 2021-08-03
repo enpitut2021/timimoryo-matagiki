@@ -175,8 +175,9 @@ app.message("", async ({ message, context }) => {
   );
 });
 
-function save_question_to_firebase(question_data){
-    admin.firestore().collection('questions').add()
+async function save_question_to_firebase(question_data){
+    const docRef = await admin.firestore().collection('questions').add(question_data)
+  return docRef.id
 }
 
 // モーダルでのデータ送信イベントを処理します
@@ -211,10 +212,10 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
     question: question_msg,
     questioner_name: body.user.name,
     questioner_id: body.user.id,
-    created_at: admin.firestore.FieldValue.serverTimestamp()  // TODO
+    created_at: admin.firestore.FieldValue.serverTimestamp()
   }
 
-  question_collection_id = save_question_to_firebase(question_data) // TODO
+  const question_collection_id = await save_question_to_firebase(question_data)
 
   console.log('question_data', question_data)
   console.log('answer_data', answers_data)
@@ -329,6 +330,10 @@ app.action("button_self-answer", async ({ view, ack, body, say, context }) => {
   }
 });
 
+async function save_answer_to_firebase(answers_data, question_collection_id){
+  await admin.firestore().collection('questions').doc(question_collection_id).collection('answers').add(answers_data)
+}
+
 // モーダルでのデータ送信イベントを処理します．回答用
 app.view("view_answer", async ({ ack, body, view, client, context }) => {
   // モーダルでのデータ送信イベントを確認
@@ -345,10 +350,11 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
     answer = answer_msg,
     answerer_id = body.user.id,
     answerer_name = body.user.name,
-    created_at: ""  // TODO
+    created_at: admin.firestore.FieldValue.serverTimestamp()
   }
 
-  save_answer_to_firebase(answers_data, question_collection_id);  // TODO
+
+  await save_answer_to_firebase(answers_data, question_collection_id);
 
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの回答「${answer_msg}」を受け付けました`;
