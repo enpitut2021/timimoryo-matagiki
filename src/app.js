@@ -272,6 +272,33 @@ app.action("button_self-answer", async ({ ack, body, say, context }) => {
               emoji: true,
             },
           },
+          {
+            "type": "input",
+            "element": {
+              "type": "static_select",
+              "placeholder": {
+                "type": "plain_text",
+                "text": "1つ目を選択してください",
+                "emoji": true
+              },
+              "options": [
+                {
+                  "text": {
+                    "type": "plain_text",
+                    "text": "",
+                    "emoji": true
+                  },
+                  "value": "action-id"
+                }
+              ],
+              "action_id": "static_select-action"
+            },
+            "label": {
+              "type": "plain_text",
+              "text": "Label",
+              "emoji": true
+            }
+          }
         ],
         submit: {
           type: "plain_text",
@@ -293,6 +320,8 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
   const answer_msg =
     view.state.values.block_1["plain_text_input-action"].value;
+  const question_collection_id = 
+    view.state.values.block_1["plain_text"].value;
 
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの回答「${answer_msg}」を受け付けました`;
@@ -307,22 +336,23 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
     (member) =>
       !member.is_bot && !member.is_workflow_bot && member.id !== body.user.id
   );
+});
 
-  app.action("button_throw-other", async ({ ack, body, say, context }) => {
-    await ack();
-    logging(`<@${body.user.name}>さんが質問をパスすることにしました`, context);
-    await say("ありがとうございます！誰に質問をパスするか直接入力してください。");
-  });
+app.action("button_throw-other", async ({ ack, body, say, context }) => {
+  await ack();
+  logging(`<@${body.user.name}>さんが質問をパスすることにしました`, context);
+  await say("ありがとうございます！誰に質問をパスするか直接入力してください。");
+});
 
-  app.action("button_pass", async ({ ack, body, say, context }) => {
-    await ack();
-    logging(`<@${body.user.name}>さんが何もしないことにしました`, context);
-    await say("ありがとうございました。");
-  });
+app.action("button_pass", async ({ ack, body, say, context }) => {
+  await ack();
+  logging(`<@${body.user.name}>さんが何もしないことにしました`, context);
+  await say("ありがとうございました。");
+});
 
-  (async () => {
-    // Start your app
-    await app.start(process.env.PORT || 3000);
+(async () => {
+  // Start your app
+  await app.start(process.env.PORT || 3000);
 
-    console.log("⚡️ Bolt app is running!");
-  })();
+  console.log("⚡️ Bolt app is running!");
+})();
