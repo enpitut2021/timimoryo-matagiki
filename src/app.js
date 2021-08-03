@@ -505,7 +505,7 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
     created_at: ""  // TODO
   }
 
-  answer_collection_id = save_answer_to_firebase(answers_data, question_collection_id)
+  answer_collection_id = save_answer_to_firebase(answers_data, question_collection_id);
 
   const question_object = generate_question_object_recommend_version(
     /*質問内容*/question_msg,
