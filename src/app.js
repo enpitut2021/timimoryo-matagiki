@@ -184,6 +184,21 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   console.log(sendable_user_list);
   const send_user = choose_at_random(sendable_user_list);
 
+  const question_data = {
+    question: question_msg,
+    questioner_name: body.user.name,
+    questioner_id: body.user.id,
+    created_at: ""  // TODO
+  }
+
+  const answers_data = [
+    {
+      answer = "", // 後から書き換える
+      answerer_id = send_user.id,
+      answerer_name = send_user.name
+    }
+  ]
+
   // ユーザーにメッセージを送信
   try {
     await client.chat.postMessage({
