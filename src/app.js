@@ -223,9 +223,6 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   const question_collection_id = await save_question_to_firebase(question_data)
 
   console.log('question_data', question_data)
-  console.log('answer_data', answers_data)
-
-
   // ユーザーにメッセージを送信
   try {
     await client.chat.postMessage({
