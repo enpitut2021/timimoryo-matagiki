@@ -1,5 +1,14 @@
 const { App } = require("@slack/bolt");
+const { firestore } = require("firebase-admin");
 require("dotenv").config();
+
+var admin = require("firebase-admin");
+
+var serviceAccount = require("../firebase.key.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 const app = new App({
   token: process.env.SLACK_BOT_TOKEN,
@@ -103,6 +112,15 @@ function generate_question_object(question, from_name, to_id, question_collectio
   return question_object;
 }
 
+async function get_answerer_id_from_question_id(question_id) {
+  const answers_querysnap = await admin.firestore().collection('questions').doc(question_id).collection('answers').get();
+  const answer_snapshot = answers_querysnap.docs[0];
+  const answer = answer_snapshot.data()
+  return answer.answerer_id
+}
+
+
+
 app.command("/matagiki", async ({ ack, body, client }) => {
   // コマンドのリクエストを確認
   await ack();
@@ -144,7 +162,7 @@ app.command("/matagiki", async ({ ack, body, client }) => {
     });
     console.log(result);
   } catch (error) {
-    console.error(error);
+  console.error(error);
   }
 });
 
@@ -341,7 +359,7 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
 app.action("button_throw-other", async ({ ack, body, say, context }) => {
   await ack();
   logging(`<@${body.user.name}>さんが質問をパスすることにしました`, context);
-  const question_collection_id = 
+  const question_collection_id =
     view.state.values.block_1["button_throw-other"].value;
   try {
     const result = await client.views.open({
@@ -423,7 +441,7 @@ app.action("button_throw-other", async ({ ack, body, say, context }) => {
  * @param {string} recommend_user 推薦したユーザID
  * @param {strign} question_collection_id 質問のコレクションID
  */
- function generate_question_object_recommend_version(question, from_name, to_id, recommend_user, question_collection_id) {
+function generate_question_object_recommend_version(question, from_name, to_id, recommend_user, question_collection_id) {
   const question_message = `<@${to_id}> チーム魑魅魍魎です．
   私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
   <@${from_name}>さんからの質問で「${question}」という質問が来ています．
@@ -489,7 +507,7 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
   const question_collection_id =
     view.state.values.block_1["static_select-action"].value;
-  const send_user = 
+  const send_user =
     view.state.values.block_1["multi_users_select-action"].value;
 
   question_msg = pick_question_msg(question_collection_id);
@@ -497,7 +515,7 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
 
   logging(`<@${body.user.name}>質問を<@${question_questioner_name}>にパスしました`, context);
 
-  const answers_data = 
+  const answers_data =
   {
     answer = `${body.user.name}が質問を${question_questioner_name}にパスしました`,
     answerer_id = body.user.id,
@@ -534,31 +552,31 @@ app.action("button_pass", async ({ ack, body, say, context }) => {
   await ack();
   logging(`<@${body.user.name}>さんが何もしないことにしました`, context);
 
-  const question_collection_id = 
-  view.state.values.block_1["button_pass"].value;
-  
+  const question_collection_id =
+    view.state.values.block_1["button_pass"].value;
+
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
   const question_msg = pick_question_msg(question_collection_id);
-  const question_questioner_name = pick_questioner_name(question_collection_id); 
+  const question_questioner_name = pick_questioner_name(question_collection_id);
   const question_questioner_id = pick_questioner_id(question_collection_id);
 
   const user_list = await app.client.users.list();
   const sendable_user_list = user_list.members.filter(
-  // Pythonでいうと `lamda member: memberがbotではない && memberが送った人ではない`
+    // Pythonでいうと `lamda member: memberがbotではない && memberが送った人ではない`
 
-  // TODO: 今までの回答者を除く
-  (member) =>
-    !member.is_bot && !member.is_workflow_bot && member.id !== body.user.id
+    // TODO: 今までの回答者を除く
+    (member) =>
+      !member.is_bot && !member.is_workflow_bot && member.id !== body.user.id
   );
 
   console.log(sendable_user_list);
   const send_user = choose_at_random(sendable_user_list);
 
   const question_data = {
-  question: question_msg,
-  questioner_name: question_questioner_name,
-  questioner_id: question_questioner_id,
-  created_at: ""  // TODO
+    question: question_msg,
+    questioner_name: question_questioner_name,
+    questioner_id: question_questioner_id,
+    created_at: ""  // TODO
   }
 
 
