@@ -176,7 +176,7 @@ app.view("view_1", async ({ack, body, view, client, context}) => {
     const question_msg =
         view.state.values.block_1["plain_text_input-action"].value;
   //firebaseに送信
-    admin.firestore().collection('questions').add(question_msg);
+    admin.firestore().collection('questions').add({question:question_msg});
     // ユーザーに対して送信するメッセージ
     const msg = `あなたの質問「${question_msg}」を受け付けました`;
 
