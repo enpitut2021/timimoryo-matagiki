@@ -192,17 +192,8 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
     created_at: ""  // TODO
   }
 
-  const answers_data = [
-    {
-      answer = "", // 後から書き換える
-      answerer_id = send_user.id,
-      answerer_name = send_user.name,
-      created_at: ""  // TODO
-    }
-  ]
 
   question_collection_id = save_question_to_firebase(question_data)
-  answer_collection_id = save_answer_to_firebase(answers_data, question_collection_id)
 
   console.log('question_data', question_data)
   console.log('answer_data', answers_data)
@@ -246,8 +237,8 @@ app.action("button_self-answer", async ({ view, ack, body, say, context }) => {
     `<@${body.user.name}>さんが直接自分で回答するを選択しました`,
     context
   );
-  const question_collection_id = 
-  view.state.values.block_1["button_self-answer"].value;
+  const question_collection_id =
+    view.state.values.block_1["button_self-answer"].value;
 
   try {
     const result = await client.views.open({
@@ -328,18 +319,70 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
   const question_collection_id =
     view.state.values.block_1["static_select-action"].value;
 
+  const answers_data =
+  {
+    answer = answer_msg,
+    answerer_id = body.user.id,
+    answerer_name = body.user.name,
+    created_at: ""  // TODO
+  }
+
+  save_answer_to_firebase(answers_data, question_collection_id)
+
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの回答「${answer_msg}」を受け付けました`;
 
   logging(`<@${body.user.name}>回答「${answer_msg}」`, context);
 
   const send_user = pick();
+
 });
 
 app.action("button_throw-other", async ({ ack, body, say, context }) => {
   await ack();
   logging(`<@${body.user.name}>さんが質問をパスすることにしました`, context);
-  await say("ありがとうございます！誰に質問をパスするか直接入力してください。");
+  try {
+    const result = await client.views.open({
+      // 適切な trigger_id を受け取ってから 3 秒以内に渡す
+      trigger_id: body.trigger_id,
+      // view の値をペイロードに含む
+      view: {
+        type: "modal",
+        // callback_id が view を特定するための識別子
+        callback_id: "view_answer",
+        title: {
+          type: "plain_text",
+          text: "Modal title",
+        },
+        "blocks": [
+          {
+            "type": "input",
+            "element": {
+              "type": "multi_users_select",
+              "placeholder": {
+                "type": "plain_text",
+                "text": "Select users",
+                "emoji": true
+              },
+              "action_id": "multi_users_select-action"
+            },
+            "label": {
+              "type": "plain_text",
+              "text": "質問をパスするユーザを選択してください",
+              "emoji": true
+            }
+          }
+        ],
+        submit: {
+          type: "plain_text",
+          text: "Submit",
+        },
+      },
+    });
+    console.log(result);
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 app.action("button_pass", async ({ ack, body, say, context }) => {
