@@ -211,7 +211,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   }
 
 
-  question_collection_id = save_question_to_firebase(question_data)
+  question_collection_id = save_question_to_firebase(question_data) // TODO
 
   console.log('question_data', question_data)
   console.log('answer_data', answers_data)
@@ -345,14 +345,14 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
     created_at: ""  // TODO
   }
 
-  save_answer_to_firebase(answers_data, question_collection_id)
+  save_answer_to_firebase(answers_data, question_collection_id);  // TODO
 
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの回答「${answer_msg}」を受け付けました`;
 
   logging(`<@${body.user.name}>回答「${answer_msg}」`, context);
 
-  const send_user = pick();
+  const send_user = pick(); // TODO
 
 });
 
@@ -510,8 +510,8 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
   const send_user =
     view.state.values.block_1["multi_users_select-action"].value;
 
-  question_msg = pick_question_msg(question_collection_id);
-  question_questioner_name = pick_questioner_name(question_collection_id);
+  question_msg = pick_question_msg(question_collection_id); // TODO
+  question_questioner_name = pick_questioner_name(question_collection_id);  // TODO
 
   logging(`<@${body.user.name}>質問を<@${question_questioner_name}>にパスしました`, context);
 
@@ -523,7 +523,7 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
     created_at: ""  // TODO
   }
 
-  answer_collection_id = save_answer_to_firebase(answers_data, question_collection_id);
+  answer_collection_id = save_answer_to_firebase(answers_data, question_collection_id); // TODO
 
   const question_object = generate_question_object_recommend_version(
     /*質問内容*/question_msg,
@@ -556,9 +556,9 @@ app.action("button_pass", async ({ ack, body, say, context }) => {
     view.state.values.block_1["button_pass"].value;
 
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
-  const question_msg = pick_question_msg(question_collection_id);
-  const question_questioner_name = pick_questioner_name(question_collection_id);
-  const question_questioner_id = pick_questioner_id(question_collection_id);
+  const question_msg = pick_question_msg(question_collection_id); // TODO
+  const question_questioner_name = pick_questioner_name(question_collection_id);  // TODO
+  const question_questioner_id = pick_questioner_id(question_collection_id);  // TODO
 
   const user_list = await app.client.users.list();
   const sendable_user_list = user_list.members.filter(
@@ -580,7 +580,7 @@ app.action("button_pass", async ({ ack, body, say, context }) => {
   }
 
 
-  question_collection_id = save_question_to_firebase(question_data)
+  question_collection_id = save_question_to_firebase(question_data); // TODO
 
   console.log('question_data', question_data)
   console.log('answer_data', answers_data)
