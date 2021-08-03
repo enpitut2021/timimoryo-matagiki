@@ -56,8 +56,7 @@ async function logging(message, context) {
  * @param {string} question_collection_id 質問のコレクションID
  */
 function generate_question_object(question, from_name, to_id, question_collection_id) {
-  const question_message = `<@${to_id}> チーム魑魅魍魎です．
-  私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
+  const question_message = `<@${to_id}> こんにちは、matagikiです!!!!!!!!!!
   <@${from_name}>さんからの質問で「${question}」という質問が来ています．
   お答えできそうなら返信ください．他にいい人がいる場合はその人を教えてください！
   よろしくお願いいたします．`;
@@ -382,7 +381,8 @@ app.action("button_self-answer", async ({ action, ack, body, context, client }) 
  * @param {string} question_collection_id 保存する回答に対する質問のID
  */
 async function save_answer_to_firebase(answers_data, question_collection_id){
-  const docRef = await admin.firestore().collection('questions').doc(question_collection_id).collection('answers').add(answers_data)
+  answers_data.question_id = question_collection_id
+  const docRef = await admin.firestore().collection('answers').add(answers_data)
   return docRef.id
 }
 
@@ -535,6 +535,10 @@ app.action("button_thanks_to_answerer", async ({ client, action, ack, body, say,
   }
 });
 
+async function get_answerer_by_id (answer_id){
+  const docDsnap = await admin.firestore().collection('answers').doc(answer_id).get()
+  return docDsnap.data()
+}
 // モーダルでのデータ送信イベントを処理します．回答用
 app.view("view_throw_thanks_to_answerer", async ({ ack, body, view, client, context }) => {
   // モーダルでのデータ送信イベントを確認
@@ -545,16 +549,16 @@ app.view("view_throw_thanks_to_answerer", async ({ ack, body, view, client, cont
     view.state.values.block_1["plain_text_input-action"].value;
   const answer_collection_id =
     view.state.values.block_2["static_select-action"].selected_option.value;
-
+  const send_user_id = (await get_answerer_by_id(answer_collection_id)).answerer_id;
   // ユーザーに対して送信するメッセージ
   const msg = `あなたのお礼「${thanks_msg}」を<@${send_user_id}>に送信しました。`;
-
+  console.log(send_user_id, answer_collection_id)
+  
   logging(`Thanks: <@${body.user.name}>「${thanks_msg}」`, context);
 
   /**
    * @type {string} 質問者のユーザーID
    */
-  const send_user_id = (await get_question_by_id(question_collection_id)).questioner_id
   try {
     await client.chat.postMessage({
       channel: send_user_id,
@@ -662,8 +666,7 @@ app.action("button_throw-other", async ({ action, ack, body, say, context, clien
  * @param {strign} question_collection_id 質問のコレクションID
  */
 function generate_question_object_recommend_version(question, from_name, to_id, recommend_user, question_collection_id) {
-  const question_message = `<@${to_id}> チーム魑魅魍魎です．
-  私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
+  const question_message = `<@${to_id}> matagiki botです!!!!!!!!!
   <@${from_name}>さんからの質問で「${question}」という質問が来ています．
   <@${recommend_user}>さんから<@${to_id}>さんが上記の質問に答えられると紹介されました．
   お答えできそうなら返信ください．他にいい人がいる場合はその人を教えてください！
@@ -770,7 +773,7 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
   try {
     await client.chat.postMessage({
       channel: body.user.id,
-      text: `<@${send_user.id}>さんに質問を投げました．ご協力ありがとうございます．`
+      text: `<@${send_user}>さんに質問を投げました．ご協力ありがとうございます．`
     });
   } catch (error) {
     console.error(error);
