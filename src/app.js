@@ -533,7 +533,61 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
 app.action("button_pass", async ({ ack, body, say, context }) => {
   await ack();
   logging(`<@${body.user.name}>さんが何もしないことにしました`, context);
-  await say("ありがとうございました。");
+
+  const question_collection_id = 
+  view.state.values.block_1["button_pass"].value;
+  
+  // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
+  const question_msg = pick_question_msg(question_collection_id);
+  const question_questioner_name = pick_questioner_name(question_collection_id); 
+  const question_questioner_id = pick_questioner_id(question_collection_id);
+
+  const user_list = await app.client.users.list();
+  const sendable_user_list = user_list.members.filter(
+  // Pythonでいうと `lamda member: memberがbotではない && memberが送った人ではない`
+
+  // TODO: 今までの回答者を除く
+  (member) =>
+    !member.is_bot && !member.is_workflow_bot && member.id !== body.user.id
+  );
+
+  console.log(sendable_user_list);
+  const send_user = choose_at_random(sendable_user_list);
+
+  const question_data = {
+  question: question_msg,
+  questioner_name: question_questioner_name,
+  questioner_id: question_questioner_id,
+  created_at: ""  // TODO
+  }
+
+
+  question_collection_id = save_question_to_firebase(question_data)
+
+  console.log('question_data', question_data)
+  console.log('answer_data', answers_data)
+
+  const question_object = generate_question_object(
+    question_msg,
+    question_questioner_name,
+    question_questioner_id,
+    question_collection_id
+  );
+
+  const send_msg = question_object.blocks[0].text.text;
+
+  logging(send_msg, context);
+
+  try {
+    await client.chat.postMessage({
+      channel: send_user.id,
+      text: send_msg,
+      blocks: question_object.blocks,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+
 });
 
 (async () => {
