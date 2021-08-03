@@ -255,14 +255,14 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   }
 });
 
-app.action("button_self-answer", async ({ view, ack, body, say, context }) => {
+app.action("button_self-answer", async ({ action, ack, body, context }) => {
   await ack();
   logging(
     `<@${body.user.name}>さんが直接自分で回答するを選択しました`,
     context
   );
-  const question_collection_id =
-    view.state.values.block_1["button_self-answer"].value;
+
+  const question_collection_id = action.value;
 
   try {
     const result = await client.views.open({
