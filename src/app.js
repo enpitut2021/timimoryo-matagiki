@@ -195,7 +195,8 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
     {
       answer = "", // 後から書き換える
       answerer_id = send_user.id,
-      answerer_name = send_user.name
+      answerer_name = send_user.name,
+      created_at: ""  // TODO
     }
   ]
 
