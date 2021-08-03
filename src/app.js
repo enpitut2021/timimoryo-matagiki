@@ -44,8 +44,9 @@ async function logging(message, context) {
  * @param {string} question 質問文本体
  * @param {string} from_name 質問者のユーザー表示名
  * @param {string} to_id 回答候補者のユーザーID
+ * @param {strign} question_collection_id 質問のコレクションID
  */
-function generate_question_object(question, from_name, to_id) {
+function generate_question_object(question, from_name, to_id, question_collection_id) {
   const question_message = `<@${to_id}> チーム魑魅魍魎です．
   私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
   <@${from_name}>さんからの質問で「${question}」という質問が来ています．
@@ -220,7 +221,8 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   const question_object = generate_question_object(
     question_msg,
     body.user.name,
-    send_user.id
+    send_user.id,
+    question_collection_id
   );
 
   const send_msg = question_object.blocks[0].text.text;
@@ -238,7 +240,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   }
 });
 
-app.action("button_self-answer", async ({ ack, body, say, context }) => {
+app.action("button_self-answer", async ({ view, ack, body, say, context }) => {
   await ack();
   logging(
     `<@${body.user.name}>さんが直接自分で回答するを選択しました`,
@@ -272,33 +274,6 @@ app.action("button_self-answer", async ({ ack, body, say, context }) => {
               emoji: true,
             },
           },
-          {
-            "type": "input",
-            "element": {
-              "type": "static_select",
-              "placeholder": {
-                "type": "plain_text",
-                "text": "1つ目を選択してください",
-                "emoji": true
-              },
-              "options": [
-                {
-                  "text": {
-                    "type": "plain_text",
-                    "text": "",
-                    "emoji": true
-                  },
-                  "value": "action-id"
-                }
-              ],
-              "action_id": "static_select-action"
-            },
-            "label": {
-              "type": "plain_text",
-              "text": "Label",
-              "emoji": true
-            }
-          }
         ],
         submit: {
           type: "plain_text",
@@ -320,8 +295,8 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
   const answer_msg =
     view.state.values.block_1["plain_text_input-action"].value;
-  const question_collection_id = 
-    view.state.values.block_1["plain_text"].value;
+  const question_collection_id =
+    view.state.values.block_1["plain_text_input-action"].value;
 
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの回答「${answer_msg}」を受け付けました`;
