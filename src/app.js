@@ -175,6 +175,11 @@ app.message("", async ({ message, context }) => {
   );
 });
 
+/**
+ * 質問のデータをfirestoreに保存する
+ * @param {object} question_data 質問データ
+ * @returns 質問ID
+ */
 async function save_question_to_firebase(question_data){
     const docRef = await admin.firestore().collection('questions').add(question_data)
   return docRef.id
@@ -337,7 +342,8 @@ app.action("button_self-answer", async ({ view, ack, body, say, context }) => {
  * @param {string} question_collection_id 保存する回答に対する質問のID
  */
 async function save_answer_to_firebase(answers_data, question_collection_id){
-  await admin.firestore().collection('questions').doc(question_collection_id).collection('answers').add(answers_data)
+  const docRef = await admin.firestore().collection('questions').doc(question_collection_id).collection('answers').add(answers_data)
+  return docRef.id
 }
 
 /**
@@ -551,7 +557,7 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
     created_at: admin.firestore.FieldValue.serverTimestamp()
   }
 
-  answer_collection_id = save_answer_to_firebase(answers_data, question_collection_id); // TODO
+  const answer_collection_id = await save_answer_to_firebase(answers_data, question_collection_id); 
 
   const question_object = generate_question_object_recommend_version(
     /*質問内容*/question_msg,
@@ -584,9 +590,9 @@ app.action("button_pass", async ({ ack, body, say, context }) => {
     view.state.values.block_1["button_pass"].value;
 
   // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
-  const question_msg = pick_question_msg(question_collection_id); // TODO
-  const question_questioner_name = pick_questioner_name(question_collection_id);  // TODO
-  const question_questioner_id = pick_questioner_id(question_collection_id);  // TODO
+  const question_msg = await get_question_by_id(question_id).question; 
+  const question_questioner_name = await get_question_by_id(question_id).questioner_name;  
+  const question_questioner_id = await get_question_by_id(question_id).questioner_id;  
 
   const user_list = await app.client.users.list();
   const sendable_user_list = user_list.members.filter(
@@ -604,7 +610,7 @@ app.action("button_pass", async ({ ack, body, say, context }) => {
     question: question_msg,
     questioner_name: question_questioner_name,
     questioner_id: question_questioner_id,
-    created_at: ""  // TODO
+    created_at: admin.firestore.FieldValue.serverTimestamp()  
   }
 
 
