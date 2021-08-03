@@ -200,6 +200,13 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
     }
   ]
 
+  question_collection_id = save_question_to_firebase(question_data)
+  answer_collection_id = save_answer_to_firebase(answers_data, question_collection_id)
+
+  console.log('question_data', question_data)
+  console.log('answer_data', answers_data)
+
+
   // ユーザーにメッセージを送信
   try {
     await client.chat.postMessage({
@@ -237,24 +244,85 @@ app.action("button_self-answer", async ({ ack, body, say, context }) => {
     `<@${body.user.name}>さんが直接自分で回答するを選択しました`,
     context
   );
-  await say("ありがとうございます！直接回答を入力してください。");
+  try {
+    const result = await client.views.open({
+      // 適切な trigger_id を受け取ってから 3 秒以内に渡す
+      trigger_id: body.trigger_id,
+      // view の値をペイロードに含む
+      view: {
+        type: "modal",
+        // callback_id が view を特定するための識別子
+        callback_id: "view_answer",
+        title: {
+          type: "plain_text",
+          text: "Modal title",
+        },
+        blocks: [
+          {
+            type: "input",
+            block_id: "block_1",
+            element: {
+              type: "plain_text_input",
+              multiline: true,
+              action_id: "plain_text_input-action",
+            },
+            label: {
+              type: "plain_text",
+              text: "ありがとうございます！直接回答を入力してください。",
+              emoji: true,
+            },
+          },
+        ],
+        submit: {
+          type: "plain_text",
+          text: "Submit",
+        },
+      },
+    });
+    console.log(result);
+  } catch (error) {
+    console.error(error);
+  }
 });
 
-app.action("button_throw-other", async ({ ack, body, say, context }) => {
+// モーダルでのデータ送信イベントを処理します．回答用
+app.view("view_answer", async ({ ack, body, view, client, context }) => {
+  // モーダルでのデータ送信イベントを確認
   await ack();
-  logging(`<@${body.user.name}>さんが質問をパスすることにしました`, context);
-  await say("ありがとうございます！誰に質問をパスするか直接入力してください。");
-});
 
-app.action("button_pass", async ({ ack, body, say, context }) => {
-  await ack();
-  logging(`<@${body.user.name}>さんが何もしないことにしました`, context);
-  await say("ありがとうございました。");
-});
+  // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
+  const answer_msg =
+    view.state.values.block_1["plain_text_input-action"].value;
 
-(async () => {
-  // Start your app
-  await app.start(process.env.PORT || 3000);
+  // ユーザーに対して送信するメッセージ
+  const msg = `あなたの回答「${answer_msg}」を受け付けました`;
 
-  console.log("⚡️ Bolt app is running!");
-})();
+  logging(`<@${body.user.name}>回答「${answer_msg}」`, context);
+
+  const user_list = await app.client.users.list();
+  const sendable_user_list = user_list.members.filter(
+    // Pythonでいうと `lamda member: memberがbotではない && memberが送った人ではない`
+
+    // TODO: SlackBotを弾く
+    (member) =>
+      !member.is_bot && !member.is_workflow_bot && member.id !== body.user.id
+  );
+
+  app.action("button_throw-other", async ({ ack, body, say, context }) => {
+    await ack();
+    logging(`<@${body.user.name}>さんが質問をパスすることにしました`, context);
+    await say("ありがとうございます！誰に質問をパスするか直接入力してください。");
+  });
+
+  app.action("button_pass", async ({ ack, body, say, context }) => {
+    await ack();
+    logging(`<@${body.user.name}>さんが何もしないことにしました`, context);
+    await say("ありがとうございました。");
+  });
+
+  (async () => {
+    // Start your app
+    await app.start(process.env.PORT || 3000);
+
+    console.log("⚡️ Bolt app is running!");
+  })();
