@@ -175,6 +175,10 @@ app.message("", async ({ message, context }) => {
   );
 });
 
+function save_question_to_firebase(question_data){
+    admin.firestore().collection('questions').add()
+}
+
 // モーダルでのデータ送信イベントを処理します
 app.view("view_1", async ({ ack, body, view, client, context }) => {
   // モーダルでのデータ送信イベントを確認
@@ -207,9 +211,8 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
     question: question_msg,
     questioner_name: body.user.name,
     questioner_id: body.user.id,
-    created_at: ""  // TODO
+    created_at: admin.firestore.FieldValue.serverTimestamp()  // TODO
   }
-
 
   question_collection_id = save_question_to_firebase(question_data) // TODO
 
