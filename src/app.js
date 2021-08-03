@@ -341,6 +341,8 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
 app.action("button_throw-other", async ({ ack, body, say, context }) => {
   await ack();
   logging(`<@${body.user.name}>さんが質問をパスすることにしました`, context);
+  const question_collection_id = 
+    view.state.values.block_1["button_throw-other"].value;
   try {
     const result = await client.views.open({
       // 適切な trigger_id を受け取ってから 3 秒以内に渡す
@@ -349,7 +351,7 @@ app.action("button_throw-other", async ({ ack, body, say, context }) => {
       view: {
         type: "modal",
         // callback_id が view を特定するための識別子
-        callback_id: "view_answer",
+        callback_id: "view_throw_question_to_other",
         title: {
           type: "plain_text",
           text: "Modal title",
@@ -371,6 +373,33 @@ app.action("button_throw-other", async ({ ack, body, say, context }) => {
               "text": "質問をパスするユーザを選択してください",
               "emoji": true
             }
+          },
+          {
+            "type": "input",
+            "element": {
+              "type": "static_select",
+              "placeholder": {
+                "type": "plain_text",
+                "text": "1つ目の選択肢を選んでください。",
+                "emoji": true
+              },
+              "options": [
+                {
+                  "text": {
+                    "type": "plain_text",
+                    "text": "こちらを選んでください",
+                    "emoji": true
+                  },
+                  "value": `${question_collection_id}`
+                }
+              ],
+              "action_id": "static_select-action"
+            },
+            "label": {
+              "type": "plain_text",
+              "text": "質問ID",
+              "emoji": true
+            }
           }
         ],
         submit: {
@@ -380,6 +409,122 @@ app.action("button_throw-other", async ({ ack, body, say, context }) => {
       },
     });
     console.log(result);
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+/**
+ * 質問者から回答候補者に質問を送信する
+ *
+ * @param {string} question 質問文本体
+ * @param {string} from_name 質問者のユーザー表示名
+ * @param {string} to_id 回答候補者のユーザーID
+ * @param {string} recommend_user 推薦したユーザID
+ * @param {strign} question_collection_id 質問のコレクションID
+ */
+ function generate_question_object_recommend_version(question, from_name, to_id, recommend_user, question_collection_id) {
+  const question_message = `<@${to_id}> チーム魑魅魍魎です．
+  私たちのチームは「質問をいい感じの人から答えてもらえるslack bot」を作る予定で，現在は手動で運用しています．
+  <@${from_name}>さんからの質問で「${question}」という質問が来ています．
+  <@${recommend_user}>さんから<@${to_id}>さんが上記の質問に答えられると紹介されました．
+  お答えできそうなら返信ください．他にいい人がいる場合はその人を教えてください！
+  よろしくお願いいたします．`;
+
+  const question_object = {
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: question_message,
+        },
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "自分で回答する",
+              emoji: true,
+            },
+            value: `${question_collection_id}`,
+            action_id: "button_self-answer",
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "他の人を紹介する",
+              emoji: true,
+            },
+            value: `${question_collection_id}`,
+            action_id: "button_throw-other",
+          },
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "遠慮しておく",
+              emoji: true,
+            },
+            value: `${question_collection_id}`,
+            action_id: "button_pass",
+          },
+        ],
+      },
+    ],
+    text: "質問が送信されました．",
+  };
+  return question_object;
+}
+
+// モーダルでのデータ送信イベントを処理します．回答用
+app.view("view_throw_question_to_other", async ({ ack, body, view, client, context }) => {
+  // モーダルでのデータ送信イベントを確認
+  await ack();
+
+  // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
+  const question_collection_id =
+    view.state.values.block_1["static_select-action"].value;
+  const send_user = 
+    view.state.values.block_1["multi_users_select-action"].value;
+
+  question_msg = pick_question_msg(question_collection_id);
+  question_questioner_name = pick_questioner_name(question_collection_id);
+
+  logging(`<@${body.user.name}>質問を<@${question_questioner_name}>にパスしました`, context);
+
+  const answers_data = 
+  {
+    answer = `${body.user.name}が質問を${question_questioner_name}にパスしました`,
+    answerer_id = body.user.id,
+    answerer_name = body.user.name,
+    created_at: ""  // TODO
+  }
+
+  answer_collection_id = save_answer_to_firebase(answers_data, question_collection_id)
+
+  const question_object = generate_question_object_recommend_version(
+    /*質問内容*/question_msg,
+    /*質問者*/question_questioner_name,
+    /*被推薦者*/send_user,
+    /*推薦者*/body.user.name,
+    /*質問ID*/question_collection_id
+  );
+
+  const send_msg = question_object.blocks[0].text.text;
+
+  logging(send_msg, context);
+
+  try {
+    await client.chat.postMessage({
+      channel: send_user.id,
+      text: send_msg,
+      blocks: question_object.blocks,
+    });
   } catch (error) {
     console.error(error);
   }
