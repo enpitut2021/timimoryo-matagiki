@@ -72,7 +72,7 @@ function generate_question_object(question, from_name, to_id, question_collectio
               text: "自分で回答する",
               emoji: true,
             },
-            value: "自分で回答する",
+            value: `${question_collection_id}`,
             action_id: "button_self-answer",
           },
           {
@@ -82,7 +82,7 @@ function generate_question_object(question, from_name, to_id, question_collectio
               text: "他の人を紹介する",
               emoji: true,
             },
-            value: "他の人を紹介する",
+            value: `${question_collection_id}`,
             action_id: "button_throw-other",
           },
           {
@@ -92,7 +92,7 @@ function generate_question_object(question, from_name, to_id, question_collectio
               text: "遠慮しておく",
               emoji: true,
             },
-            value: "遠慮しておく",
+            value: `${question_collection_id}`,
             action_id: "button_pass",
           },
         ],
@@ -246,6 +246,9 @@ app.action("button_self-answer", async ({ view, ack, body, say, context }) => {
     `<@${body.user.name}>さんが直接自分で回答するを選択しました`,
     context
   );
+  const question_collection_id = 
+  view.state.values.block_1["button_self-answer"].value;
+
   try {
     const result = await client.views.open({
       // 適切な trigger_id を受け取ってから 3 秒以内に渡す
@@ -274,6 +277,33 @@ app.action("button_self-answer", async ({ view, ack, body, say, context }) => {
               emoji: true,
             },
           },
+          {
+            "type": "input",
+            "element": {
+              "type": "static_select",
+              "placeholder": {
+                "type": "plain_text",
+                "text": "1つ目の選択肢を選んでください。",
+                "emoji": true
+              },
+              "options": [
+                {
+                  "text": {
+                    "type": "plain_text",
+                    "text": "こちらを選んでください",
+                    "emoji": true
+                  },
+                  "value": `${question_collection_id}`
+                }
+              ],
+              "action_id": "static_select-action"
+            },
+            "label": {
+              "type": "plain_text",
+              "text": "質問ID",
+              "emoji": true
+            }
+          }
         ],
         submit: {
           type: "plain_text",
@@ -296,21 +326,14 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
   const answer_msg =
     view.state.values.block_1["plain_text_input-action"].value;
   const question_collection_id =
-    view.state.values.block_1["plain_text_input-action"].value;
+    view.state.values.block_1["static_select-action"].value;
 
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの回答「${answer_msg}」を受け付けました`;
 
   logging(`<@${body.user.name}>回答「${answer_msg}」`, context);
 
-  const user_list = await app.client.users.list();
-  const sendable_user_list = user_list.members.filter(
-    // Pythonでいうと `lamda member: memberがbotではない && memberが送った人ではない`
-
-    // TODO: SlackBotを弾く
-    (member) =>
-      !member.is_bot && !member.is_workflow_bot && member.id !== body.user.id
-  );
+  const send_user = pick();
 });
 
 app.action("button_throw-other", async ({ ack, body, say, context }) => {
