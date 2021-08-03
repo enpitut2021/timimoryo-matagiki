@@ -255,7 +255,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   }
 });
 
-app.action("button_self-answer", async ({ action, ack, body, context }) => {
+app.action("button_self-answer", async ({ action, ack, body, context, client }) => {
   await ack();
   logging(
     `<@${body.user.name}>さんが直接自分で回答するを選択しました`,
