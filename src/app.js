@@ -53,7 +53,7 @@ async function logging(message, context) {
  * @param {string} question 質問文本体
  * @param {string} from_name 質問者のユーザー表示名
  * @param {string} to_id 回答候補者のユーザーID
- * @param {strign} question_collection_id 質問のコレクションID
+ * @param {string} question_collection_id 質問のコレクションID
  */
 function generate_question_object(question, from_name, to_id, question_collection_id) {
   const question_message = `<@${to_id}> チーム魑魅魍魎です．
@@ -120,7 +120,6 @@ async function get_answerer_id_from_question_id(question_id) {
 }
 
 
-
 app.command("/matagiki", async ({ ack, body, client }) => {
   // コマンドのリクエストを確認
   await ack();
@@ -162,7 +161,7 @@ app.command("/matagiki", async ({ ack, body, client }) => {
     });
     console.log(result);
   } catch (error) {
-  console.error(error);
+    console.error(error);
   }
 });
 
@@ -199,7 +198,7 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの質問「${question_msg}」を受け付けました`;
 
-  logging(`<@${body.user.name}>「${question_msg}」`, context);
+  logging(`Question: <@${body.user.name}>「${question_msg}」`, context);
 
   const user_list = await app.client.users.list();
   const sendable_user_list = user_list.members.filter(
@@ -255,8 +254,51 @@ app.view("view_1", async ({ ack, body, view, client, context }) => {
   }
 });
 
+/**
+ * 質問者から回答候補者に質問を送信する
+ *
+ * @param {string} question_msg 質問文本体
+ * @param {string} answer_msg 回答文本体
+ * @param {string} from_name 回答者のユーザー表示名
+ * @param {string} to_id 質問者のユーザーID
+ * @param {string} answer_collection_id 回答のコレクションID
+ */
+function generate_answer_object(question_msg, answer_msg, from_name, to_id, answer_collection_id) {
+  const question_message = `「${question_msg}」という質問の回答として<@${from_name}>さんから「${answer_msg}}」という回答が返ってきています．
+  是非、お礼をいいましょう!!`;
+
+  const answer_object = {
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: question_message,
+        },
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: {
+              type: "plain_text",
+              text: "お礼をする",
+              emoji: true,
+            },
+            value: `${answer_collection_id}`,
+            action_id: "button_thanks_to_answerer",
+          },
+        ],
+      },
+    ],
+    text: "質問が送信されました．",
+  };
+  return answer_object;
+}
+
 app.action("button_self-answer", async ({ action, ack, body, context, client }) => {
-  await ack();
+    await ack();
   logging(
     `<@${body.user.name}>さんが直接自分で回答するを選択しました`,
     context
@@ -374,20 +416,163 @@ app.view("view_answer", async ({ ack, body, view, client, context }) => {
     created_at: admin.firestore.FieldValue.serverTimestamp()
   }
 
+  const question_msg = (await get_question_by_id(question_collection_id)).question
+
 
   console.error("question_collection_id: ", question_collection_id)
-  await save_answer_to_firebase(answers_data, question_collection_id);
+  const answer_collection_id = await save_answer_to_firebase(answers_data, question_collection_id);
 
   // ユーザーに対して送信するメッセージ
   const msg = `あなたの回答「${answer_msg}」を受け付けました`;
 
-  logging(`<@${body.user.name}>回答「${answer_msg}」`, context);
+  logging(`Answer: <@${body.user.name}>「${answer_msg}」`, context);
+
+  const send_user = (await get_question_by_id(question_collection_id)).questioner_id; // TODO
+
+  const answer_object = generate_answer_object(
+    question_msg,
+    answer_msg,
+    body.user.name,
+    send_user,
+    answer_collection_id
+  );
+
+  const send_msg = answer_object.blocks[0].text.text;
+
+  logging(send_msg, context);
+
+  try {
+    await client.chat.postMessage({
+      channel: send_user,
+      text: send_msg,
+      blocks: answer_object.blocks,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+
+  try {
+    await client.chat.postMessage({
+      channel: body.user.id,
+      text: msg,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+
+});
+
+app.action("button_thanks_to_answerer", async ({ client, action, ack, body, say, context }) => {
+  await ack();
+  logging(`<@${body.user.name}>さんがお礼をするそうです`, context);
+  const answer_collection_id = action.value;
+  try {
+    const result = await client.views.open({
+      // 適切な trigger_id を受け取ってから 3 秒以内に渡す
+      trigger_id: body.trigger_id,
+      // view の値をペイロードに含む
+      view: {
+        type: "modal",
+        // callback_id が view を特定するための識別子
+        callback_id: "view_throw_thanks_to_answerer",
+        title: {
+          type: "plain_text",
+          text: "Modal title",
+        },
+        blocks: [
+          {
+            type: "input",
+            block_id: "block_1",
+            element: {
+              type: "plain_text_input",
+              multiline: true,
+              action_id: "plain_text_input-action",
+            },
+            label: {
+              type: "plain_text",
+              text: "お礼を書いてください",
+              emoji: true,
+            },
+          },
+          {
+            "type": "input",
+            block_id: "block_2",
+            "element": {
+              "type": "static_select",
+              "placeholder": {
+                "type": "plain_text",
+                "text": "1つ目の選択肢を選んでください。",
+                "emoji": true
+              },
+              "options": [
+                {
+                  "text": {
+                    "type": "plain_text",
+                    "text": "こちらを選んでください",
+                    "emoji": true
+                  },
+                  "value": `${answer_collection_id}`
+                }
+              ],
+              "action_id": "static_select-action"
+            },
+            "label": {
+              "type": "plain_text",
+              "text": "回答ID",
+              "emoji": true
+            }
+          }
+        ],
+        submit: {
+          type: "plain_text",
+          text: "Submit",
+        },
+      },
+    });
+    console.log(result);
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+// モーダルでのデータ送信イベントを処理します．回答用
+app.view("view_throw_thanks_to_answerer", async ({ ack, body, view, client, context }) => {
+  // モーダルでのデータ送信イベントを確認
+  await ack();
+
+  // block_id: block_1 という input ブロック内で action_id: input_a の場合の入力
+  const thanks_msg =
+    view.state.values.block_1["plain_text_input-action"].value;
+  const answer_collection_id =
+    view.state.values.block_2["static_select-action"].selected_option.value;
+
+  // ユーザーに対して送信するメッセージ
+  const msg = `あなたのお礼「${thanks_msg}」を<@${send_user_id}>に送信しました。`;
+
+  logging(`Thanks: <@${body.user.name}>「${thanks_msg}」`, context);
 
   /**
    * @type {string} 質問者のユーザーID
    */
-  const send_user = (await get_question_by_id(question_collection_id)).questioner_id
+  const send_user_id = (await get_question_by_id(question_collection_id)).questioner_id
+  try {
+    await client.chat.postMessage({
+      channel: send_user_id,
+      text: `<@${body.user.name}>からお礼が届きました！
+            「${thanks_msg}」`,
+    });
+  } catch (error) {
+    console.error(error);
+  }
 
+  try {
+    await client.chat.postMessage({
+      channel: body.user.id,
+      text: msg,
+    });
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 app.action("button_throw-other", async ({ action, ack, body, say, context, client }) => {
@@ -561,11 +746,11 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
   const answer_collection_id = await save_answer_to_firebase(answers_data, question_collection_id); 
 
   const question_object = generate_question_object_recommend_version(
-    /*質問内容*/question_msg,
-    /*質問者*/question_questioner_name,
-    /*被推薦者*/send_user,
-    /*推薦者*/body.user.name,
-    /*質問ID*/question_collection_id
+        /*質問内容*/question_msg,
+        /*質問者*/question_questioner_name,
+        /*被推薦者*/send_user,
+        /*推薦者*/body.user.name,
+        /*質問ID*/question_collection_id
   );
 
   const send_msg = question_object.blocks[0].text.text;
@@ -577,6 +762,15 @@ app.view("view_throw_question_to_other", async ({ ack, body, view, client, conte
       channel: send_user,
       text: send_msg,
       blocks: question_object.blocks,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+
+  try {
+    await client.chat.postMessage({
+      channel: body.user.id,
+      text: `<@${send_user.id}>さんに質問を投げました．ご協力ありがとうございます．`
     });
   } catch (error) {
     console.error(error);
@@ -624,6 +818,15 @@ app.action("button_pass", async ({ action, ack, body, context, client }) => {
       channel: send_user.id,
       text: send_msg,
       blocks: question_object.blocks,
+    });
+  } catch (error) {
+    console.error(error);
+  }
+
+  try {
+    await client.chat.postMessage({
+      channel: body.user.id,
+      text: `ご協力ありがとうございます．`,
     });
   } catch (error) {
     console.error(error);
